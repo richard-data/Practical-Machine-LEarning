@@ -1,0 +1,79 @@
+---
+title: "PML Prediction Assignment"
+author: "richard-data"
+date: "December 9, 2018"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Datasets & Packages
+
+Load in the testing and training dataset. Load in the following package.Take a look at the datasets.
+
+```{r cars}
+testdata<-read.csv("pml-testing.csv")
+traindata<-read.csv("pml-training.csv")
+library(caret)
+library(rattle)
+library(rpart)
+library(rpart.plot)
+library(randomForest)
+library(repmis)
+head(testdata,10)
+head(traindata,10)
+```
+
+## Remove missing values and Split data
+Remove the missing values from the datasets where more than 90% are null. In addition, remove the first seven columns with names and timestamps because they are not important.
+
+Then, the training set will be subsetted (70/30) for training and validation. 
+
+```{r}
+coltoremove<-which(colSums(is.na(traindata) |traindata=="")>0.90*dim(traindata)[1])
+training2<-traindata[,-coltoremove]
+training3<-training2[,-c(1:7)]
+testing3<-testdata[,-c(1:7)]
+
+fortraining<-createDataPartition(training3$classe,p=0.70,list=FALSE)
+train<-training3[fortraining,]
+validate<-training3[-fortraining,]
+```
+
+##Classification Tree
+```{r}
+set.seed(12354)
+trControl<-trainControl(method="cv",number=5)
+model<-train(classe~.,data=train,method="rpart",trControl=trControl)
+fancyRpartPlot(model$finalModel)
+```
+
+```{r}
+trainpred<-predict(model,newdata=validate)
+CONFUSION<-confusionMatrix(validate$classe,trainpred)
+CONFUSION
+```
+
+The accuracy is 49%. Let's try another model. 
+
+##Random Forest
+```{r}
+RANDOMFOREST<-train(classe~.,data=train,method="rf",trControl=trControl,verbose=FALSE)
+print(RANDOMFOREST)
+```
+```{r}
+trainpred2<-predict(RANDOMFOREST,newdata=validate)
+confusion2<-confusionMatrix(validate$classe,trainpred2)
+confusion2
+```
+The accuracy is very high and I'm willing to call it here.
+
+##PREDICT TEST DATA
+```{r}
+FINAL<-predict(RANDOMFOREST,newdata=testdata)
+FINAL
+```
