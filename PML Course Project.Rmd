@@ -71,6 +71,7 @@ confusion2<-confusionMatrix(validate$classe,trainpred2)
 confusion2
 ```
 The accuracy is very high and I'm willing to call it here.
+Accuracy is 99.35% and the estimated out-of-sample error is 0.65%.
 
 ##PREDICT TEST DATA
 ```{r}
